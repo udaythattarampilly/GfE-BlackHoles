@@ -4,7 +4,7 @@ Udaykrishna Thattarampilly, Yunlong Zheng, and Vishnu Kakkat**, *"Spherically sy
 [arXiv:2602.13694](https://doi.org/10.48550/arXiv.2602.13694)
 
 ## Abstract
-We investigate static and dynamical spherically symmetric black hole solutions within the Gravity from Entropy (GfE) framework. The code in this repository solves the modified vacuum field equations, establishes consistency with strong-field astrophysical observations (S2 star and EHT), and simulates the mass-evolution profile.
+We investigate static and dynamical spherically symmetric black hole solutions within the Gravity from Entropy (GfE) framework. The code in this repository solves the modified vacuum field equations, establishes consistency with strong-field astrophysical observations (S2 star and EHT).
 
 ## Repository Content
 
