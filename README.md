@@ -10,17 +10,17 @@ We investigate static and dynamical spherically symmetric black hole solutions w
 
 The `notebooks/` directory contains the following Wolfram Mathematica (.nb) files:
 
-1. **`schwarzchild_solution.nb`**
+1. **`schwarzchild solution.nb`**
    - Implements the modified Einstein equations (Eq. 15).
    - Solves for metric functions $A(r)$ and $B(r)$ using the asymptotic series expansion (Eq. 16, 17).
    - **Generates Figure 1**: Comparison between numerical solutions and the analytic Schwarzschild limit.
 
-2. **`precession_constraint_beta.nb`**
+2. **`precession constraint on beta.nb`**
    - Calculates the relativistic periapsis shift $\delta\phi$ (Eq. 25).
    - Performs numerical integration using S2 star orbital parameters ($a \approx 12,500r_S, e \approx 0.8846$).
    - **Generates Figure 2**: Precession factor $f_{SP}$ as a function of the coupling parameter $\beta$.
 
-3. **`lensing_constraint_beta.nb`**
+3. **`lensing constraint on beta.nb`**
    - Solves for the photon sphere radius $r_{ps}$ (Eq. 30) and critical impact parameter $b_{crit}$.
    - Computes the angular shadow diameter $\theta_{sh}$ for Sagittarius A*.
    - **Generates Figure 3**: Observational bounds on $\beta$ using EHT data.
