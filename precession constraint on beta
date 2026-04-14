@@ -1,0 +1,112 @@
+(* ==========================================================*)(*1. \
+CLEAN START& SYSTEM PARAMETERS*)(* \
+==========================================================*)
+ClearAll["Global`*"];
+
+(*System:S2 Star (GRAVITY Collaboration Data)*)
+(*We work in normalized units where Rs=1*)
+
+eccentricity = 0.884649;
+semiMajorAxis = 12500.0; (*Approx.12,500 Rs for S2*)
+
+(*Calculate Turning Points (Periapsis and Apoapsis)*)
+rp = semiMajorAxis*(1 - eccentricity);
+ra = semiMajorAxis*(1 + eccentricity);
+
+Print["--- System Parameters ---"];
+Print["Orbit: S2 Star around Sgr A*"];
+Print["Periapsis (rp): ", rp, " Rs"];
+Print["Apoapsis (ra): ", ra, " Rs"];
+Print["-------------------------"];
+
+(* ==========================================================*)
+(*2. DEFINE THE METRIC*)
+(* ==========================================================*)
+
+(*A(r) and B(r) in units of Rs=1*)
+(*beta is dimensionless (represents Beta_phys/Rs^2)*)
+
+Afun[r_, b_] := 1.0 - 1.0/r - b/(48.0*r^4);
+Bfun[r_, b_] := 1.0/(1.0 - 1.0/r) + b/(12.0*r^4);
+
+(* ==========================================================*)
+(*3. ROBUST PRECESSION SOLVER*)
+(* ==========================================================*)
+
+(*Calculates the orbital precession shift (Delta Phi-2Pi)*)
+(*Returns'Missing[]' if beta creates an impossible orbit*)
+
+CalculateShift[b_?NumericQ] := 
+  Module[{valAp, valAa, numerator, denominator, L2, E2, eps, integral,
+     shift},(*1. Evaluate Metric at turning points*)
+   valAp = Afun[rp, b];
+   valAa = Afun[ra, b];
+   (*2. Solve for Energy (E) and Angular Momentum (L)*)(*Derived from \
+V_eff(rp)=V_eff(ra)=0*)numerator = valAa - valAp;
+   denominator = (valAp/rp^2) - (valAa/ra^2);
+   (*Safety Check:Prevent division by zero or unphysical orbits*)
+   If[denominator == 0 || (numerator/denominator) < 0, 
+    Return[Missing[]]];
+   L2 = numerator/denominator;
+   E2 = valAp*(1.0 + L2/rp^2);
+   If[E2 < 0, Return[Missing[]]];
+   (*3. INTEGRATION*)(*We offset limits by epsilon (eps) to avoid the \
+1/0 singularity at endpoints*)(*This removes the "gaps" in the plot \
+and runs 100x faster*)eps = 10^-6;
+   integral = 
+    NIntegrate[(Sqrt[L2]*Sqrt[Bfun[r, b]])/(r^2*
+        Sqrt[Abs[E2/Afun[r, b] - (1.0 + L2/r^2)]]), {r, 
+      rp*(1.0 + eps), ra*(1.0 - eps)}, Method -> "GlobalAdaptive", 
+     PrecisionGoal -> 4,(*Lower precision is fine for plotting*)
+     AccuracyGoal -> 5];
+   (*Total Precession Shift=2*Integral-2Pi*)
+   shift = (2*integral) - (2*Pi);
+   Return[shift];];
+
+(* ==========================================================*)
+(*4. EXECUTION& PARALLEL SCAN*)
+(* ==========================================================*)
+
+(*Step A:Calculate Standard GR Reference (beta=0)*)
+Print["Calculating GR Reference..."];
+shiftGR = CalculateShift[0];
+Print["GR Shift: ", shiftGR, " rad/orbit"];
+
+(*Step B:Scan a range of Beta values*)
+(*Since r~1400,r^4 is huge.Beta must be~10^13 to have an effect.*)
+(*Adjust range:-5*10^14 to 5*10^14*)
+
+range = 5*10^7;
+step = range/50.0; (*100 total points*)
+
+Print["Scanning Beta values (Parallel)..."];
+results = 
+  ParallelTable[{b, CalculateShift[b]/shiftGR}, {b, -range, range, 
+    step}];
+
+(*Remove any failed points*)
+results = DeleteCases[results, {_, Missing[]}];
+
+(* ==========================================================*)
+(*5. VISUALIZATION*)
+(* ==========================================================*)
+
+(*Observational Bounds from GRAVITY (f_SP=1.10+/-0.19)*)
+fspMean = 1.10;
+fspSigma = 0.19;
+upperBound = fspMean + 2*fspSigma; (*2-sigma*)
+lowerBound = fspMean - 2*fspSigma;
+
+Show[(*The calculated model curve*)
+ ListLinePlot[results, PlotStyle -> {Blue, Thickness[0.005]}, 
+  Frame -> True, 
+  FrameLabel -> {"\!\(\*FractionBox[\(\[Beta]\), \
+SuperscriptBox[SubscriptBox[\(r\), \(S\)], \(2\)]]\)", 
+    "f_SP (Precession Factor)"}, 
+  PlotLabel -> "Constraint on \[Beta] from S2 Star Orbit", 
+  GridLines -> Automatic],(*The Observational Limits (Green Region)*)
+ Plot[{lowerBound, upperBound, 1.0}, {x, -range, range}, 
+  Filling -> {1 -> {2}}, 
+  FillingStyle -> Directive[Green, Opacity[0.2]], 
+  PlotStyle -> {Directive[Green, Dashed], Directive[Green, Dashed], 
+    Directive[Black, Dashed]}]]
